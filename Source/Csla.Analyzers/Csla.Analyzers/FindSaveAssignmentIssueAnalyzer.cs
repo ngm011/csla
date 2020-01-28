@@ -30,8 +30,12 @@ namespace Csla.Analyzers
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => 
       ImmutableArray.Create(saveResultIsNotAssignedRule, saveAsyncResultIsNotAssignedRule);
 
-    public override void Initialize(AnalysisContext context) => 
+    public override void Initialize(AnalysisContext context)
+    {
+      context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
+      context.EnableConcurrentExecution();
       context.RegisterSyntaxNodeAction(AnalyzeInvocation, SyntaxKind.InvocationExpression);
+    }
 
     private static void AnalyzeInvocation(SyntaxNodeAnalysisContext context)
     {
@@ -43,7 +47,7 @@ namespace Csla.Analyzers
         var symbol = context.SemanticModel.GetSymbolInfo(invocationNode.Expression);
         var invocationSymbol = symbol.Symbol;
 
-        if ((invocationSymbol?.ContainingType?.IsBusinessBase() ?? false))
+        if (invocationSymbol?.ContainingType?.IsBusinessBase() ?? false)
         {
           context.CancellationToken.ThrowIfCancellationRequested();
           var expressionStatementNode = invocationNode.FindParent<ExpressionStatementSyntax>();

@@ -8,17 +8,11 @@ namespace ProjectTracker.Library.Security
   [Serializable]
   public class PTIdentity : CslaIdentityBase<PTIdentity>
   {
-    public static void GetPTIdentity(string username, string password, EventHandler<DataPortalResult<PTIdentity>> callback)
-    {
-      DataPortal.BeginFetch<PTIdentity>(new UsernameCriteria(username, password), callback);
-    }
-
     public static async Task<PTIdentity> GetPTIdentityAsync(string username, string password)
     {
       return await DataPortal.FetchAsync<PTIdentity>(new UsernameCriteria(username, password));
     }
 
-#if FULL_DOTNET 
     public static PTIdentity GetPTIdentity(string username, string password)
     {
       return DataPortal.Fetch<PTIdentity>(new UsernameCriteria(username, password));
@@ -28,8 +22,8 @@ namespace ProjectTracker.Library.Security
     {
       return DataPortal.Fetch<PTIdentity>(username);
     }
-#endif
 
+    [Fetch]
     private void DataPortal_Fetch(string username)
     {
       ProjectTracker.Dal.UserDto data = null;
@@ -48,6 +42,7 @@ namespace ProjectTracker.Library.Security
       }
     }
 
+    [Fetch]
     private void DataPortal_Fetch(UsernameCriteria criteria)
     {
       ProjectTracker.Dal.UserDto data = null;
@@ -70,17 +65,17 @@ namespace ProjectTracker.Library.Security
     {
       if (data != null)
       {
-        base.Name = data.Username;
-        base.IsAuthenticated = true;
-        base.AuthenticationType = "Membership";
-        base.Roles = new Csla.Core.MobileList<string>(data.Roles);
+        Name = data.Username;
+        IsAuthenticated = true;
+        AuthenticationType = "Membership";
+        Roles = new Csla.Core.MobileList<string>(data.Roles);
       }
       else
       {
-        base.Name = string.Empty;
-        base.IsAuthenticated = false;
-        base.AuthenticationType = string.Empty;
-        base.Roles = new Csla.Core.MobileList<string>();
+        Name = string.Empty;
+        IsAuthenticated = false;
+        AuthenticationType = string.Empty;
+        Roles = new Csla.Core.MobileList<string>();
       }
     }
   }

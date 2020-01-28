@@ -1,5 +1,6 @@
 using System;
 using System.Security.Principal;
+using System.Threading.Tasks;
 using Csla.Security;
 
 namespace ProjectTracker.Library.Security
@@ -14,7 +15,7 @@ namespace ProjectTracker.Library.Security
       : base(identity)
     { }
 
-    public static async System.Threading.Tasks.Task LoginAsync(string username, string password)
+    public static async Task LoginAsync(string username, string password)
     {
       try
       {
@@ -27,7 +28,6 @@ namespace ProjectTracker.Library.Security
       }
     }
 
-#if FULL_DOTNET
     public static bool Login(string username, string password)
     {
       var identity = PTIdentity.GetPTIdentity(username, password);
@@ -39,7 +39,6 @@ namespace ProjectTracker.Library.Security
       var identity = PTIdentity.GetPTIdentity(username);
       return SetPrincipal(identity);
     }
-#endif
 
     private static bool SetPrincipal(IIdentity identity)
     {
@@ -61,8 +60,7 @@ namespace ProjectTracker.Library.Security
     public static event Action NewUser;
     private static void OnNewUser()
     {
-      if (NewUser != null)
-        NewUser();
+      NewUser?.Invoke();
     }
   }
 }

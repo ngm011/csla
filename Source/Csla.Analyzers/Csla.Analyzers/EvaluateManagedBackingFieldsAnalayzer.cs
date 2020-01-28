@@ -25,8 +25,12 @@ namespace Csla.Analyzers
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => 
       ImmutableArray.Create(mustBePublicStaticAndReadonlyRule);
 
-    public override void Initialize(AnalysisContext context) => 
+    public override void Initialize(AnalysisContext context)
+    {
+      context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
+      context.EnableConcurrentExecution();
       context.RegisterSyntaxNodeAction(AnalyzeFieldDeclaration, SyntaxKind.FieldDeclaration);
+    }
 
     private static void AnalyzeFieldDeclaration(SyntaxNodeAnalysisContext context)
     {
@@ -104,20 +108,6 @@ namespace Csla.Analyzers
       }
 
       return false;
-    }
-
-    public string A { get; set; }
-
-    public string B
-    {
-      get => string.Empty;
-      set => B = value;
-    }
-
-    public string C
-    {
-      get { return string.Empty; }
-      set { C = value; }
     }
 
     private static bool DetermineIfPropertyUsesField(SyntaxNodeAnalysisContext context,

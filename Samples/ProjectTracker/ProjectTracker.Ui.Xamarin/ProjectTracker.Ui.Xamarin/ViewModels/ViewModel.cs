@@ -1,18 +1,39 @@
 ﻿using System;
+using System.Threading.Tasks;
+using Csla;
 using Csla.Xaml;
 
 namespace XamarinFormsUi.ViewModels
 {
   public abstract class ViewModel<T> : ViewModelBase<T>
   {
-    protected override void OnError(Exception error)
+    private string _errorText;
+    public string ErrorText
     {
-      base.OnError(error);
-      string message = error.Message;
-      if (error.InnerException != null)
-        message = error.InnerException.Message;
-      //TODO: display error notification here
-      //await new MessageDialog(message, "Data error").ShowAsync();
+      get { return _errorText; }
+      set
+      {
+        _errorText = value;
+        OnPropertyChanged("ErrorText");
+      }
+    }
+
+    protected override async Task<T> RefreshAsync<F>(Func<Task<T>> factory)
+    {
+      T result = default;
+      try
+      {
+        result = await base.RefreshAsync<F>(factory);
+      }
+      catch (DataPortalException ex)
+      {
+        ErrorText = ex.BusinessExceptionMessage;
+      }
+      catch (Exception ex)
+      {
+        ErrorText = ex.Message;
+      }
+      return result;
     }
   }
 }

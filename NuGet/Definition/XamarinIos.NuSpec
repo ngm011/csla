@@ -8,6 +8,7 @@
     <authors>Marimer LLC</authors>
     <license type="expression">MIT</license>
     <projectUrl>https://cslanet.com/</projectUrl>
+    <icon>images\csla.png</icon>
     <iconUrl>https://raw.githubusercontent.com/MarimerLLC/csla/master/Support/Logos/csla.png</iconUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>
@@ -26,5 +27,7 @@ Supports the creation of Xamarin iOS applications using the unified API.
   <files>
     <!-- Xamarin iOS Client -->
     <file src="..\..\Bin\Release\iOS\**\Csla.Iosui.*" target="lib\Xamarin.iOS" />
+    <!-- icon -->
+    <file src="..\..\Support\Logos\csla.png" target="images\" />
   </files>
 </package>

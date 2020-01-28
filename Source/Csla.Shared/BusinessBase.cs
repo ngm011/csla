@@ -136,7 +136,7 @@ namespace Csla
     /// <summary>
     /// Saves the object to the database.
     /// </summary>
-    public async System.Threading.Tasks.Task<T> SaveAsync()
+    public async Task<T> SaveAsync()
     {
       return await SaveAsync(false);
     }
@@ -148,7 +148,7 @@ namespace Csla
     /// If true, triggers overriding IsNew and IsDirty. 
     /// If false then it is the same as calling Save().
     /// </param>
-    public async System.Threading.Tasks.Task<T> SaveAsync(bool forceUpdate)
+    public async Task<T> SaveAsync(bool forceUpdate)
     {
       return await SaveAsync(forceUpdate, null, false);
     }
@@ -162,7 +162,7 @@ namespace Csla
     /// </param>
     /// <param name="userState">User state data.</param>
     /// <param name="isSync">True if the save operation should be synchronous.</param>
-    protected async virtual System.Threading.Tasks.Task<T> SaveAsync(bool forceUpdate, object userState, bool isSync)
+    protected async virtual Task<T> SaveAsync(bool forceUpdate, object userState, bool isSync)
     {
       if (forceUpdate && IsNew)
       {
@@ -172,7 +172,7 @@ namespace Csla
         // now mark the object as dirty so it can save
         MarkDirty(true);
       }
-      T result;
+      T result = default(T);
       if (this.IsChild)
         throw new InvalidOperationException(Resources.NoSaveChildException);
       if (EditLevel > 0)
@@ -189,14 +189,20 @@ namespace Csla
         }
         else
         {
-          MarkBusy();
+          if (ApplicationContext.AutoCloneOnUpdate)
+            MarkBusy();
           try
           {
             result = await DataPortal.UpdateAsync<T>((T)this);
           }
           finally
           {
-            MarkIdle();
+            if (ApplicationContext.AutoCloneOnUpdate)
+            {
+              if (result != null)
+                result.MarkIdle();
+              MarkIdle();
+            }
           }
         }
       }

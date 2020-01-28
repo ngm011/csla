@@ -94,7 +94,7 @@ namespace ProjectTracker.Library
       BusinessRules.AddRule(new NotifyRoleNameChanged(RoleProperty));
       BusinessRules.AddRule(
         new Csla.Rules.CommonRules.IsInRole(
-          Csla.Rules.AuthorizationActions.WriteProperty, RoleProperty, "ProjectManager"));
+          Csla.Rules.AuthorizationActions.WriteProperty, RoleProperty, Security.Roles.ProjectManager));
     }
 
     private class NotifyRoleNameChanged : BusinessRule
@@ -105,7 +105,7 @@ namespace ProjectTracker.Library
 
       protected override void Execute(IRuleContext context)
       {
-        ((ProjectResourceEdit)context.Target).OnPropertyChanged("RoleName");
+        ((ProjectResourceEdit)context.Target).OnPropertyChanged(nameof(RoleName));
       }
     }
 

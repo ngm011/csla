@@ -114,6 +114,33 @@ namespace Csla.Analyzers.Tests.Extensions
     public void IsBusinessBaseWhenSymbolIsNull() => Assert.IsFalse((null as ITypeSymbol).IsBusinessBase());
 
     [TestMethod]
+    public async Task IsBusinessRuleForTypeThatIsNotABusinessRule()
+    {
+      var code = "public class A { }";
+      Assert.IsFalse((await GetTypeSymbolAsync(code, "A")).IsBusinessRule());
+    }
+
+    [TestMethod]
+    public async Task IsBusinessRuleForTypeThatIsABusinessRule()
+    {
+      var code = 
+@"using Csla.Rules;
+
+public class A : BusinessRule { }";
+      Assert.IsTrue((await GetTypeSymbolAsync(code, "A")).IsBusinessRule());
+    }
+
+    [TestMethod]
+    public async Task IsBusinessRuleForTypeThatIsABusinessRuleAsync()
+    {
+      var code =
+@"using Csla.Rules;
+
+public class A : BusinessRuleAsync { }";
+      Assert.IsTrue((await GetTypeSymbolAsync(code, "A")).IsBusinessRule());
+    }
+
+    [TestMethod]
     public async Task IsObjectFactoryForNotObjectFactoryType()
     {
       var code = "public class A { }";
@@ -321,6 +348,64 @@ public class A : CommandBase<A> { }";
       Assert.IsTrue((await GetTypeSymbolAsync(code, "A")).IsStereotype());
     }
 
+    [TestMethod]
+    public async Task IsRunLocalAttribute()
+    {
+      var code =
+@"using Csla;
+
+public class A : BusinessBase<A> 
+{ 
+  [RunLocal]
+  private void B() { }
+}";
+      Assert.IsTrue((await GetAttributeTypeSymbolAsync(code, "B")).IsRunLocalAttribute());
+    }
+
+    [TestMethod]
+    public async Task IsArgumentInjectableWithAttribute()
+    {
+      var code =
+@"using Csla;
+
+public class A
+{ 
+  private void B([Inject] int b) { }
+}";
+      Assert.IsTrue((await GetArgumentAttributeTypeSymbolAsync(code, "B")).IsInjectable());
+    }
+
+    [TestMethod]
+    public async Task IsArgumentInjectableWithoutAttribute()
+    {
+      var code =
+@"using System;
+
+public class CAttribute : Attribute { }
+
+public class A
+{ 
+  private void B([C] int b) { }
+}";
+      Assert.IsFalse((await GetArgumentAttributeTypeSymbolAsync(code, "B")).IsInjectable());
+    }
+
+    private async Task<ITypeSymbol> GetArgumentAttributeTypeSymbolAsync(string code, string methodName)
+    {
+      var (root, model) = await GetRootAndModel(code);
+      var methodSymbol = model.GetDeclaredSymbol(
+        root.DescendantNodes().OfType<MethodDeclarationSyntax>().First(_ => _.Identifier.Text == methodName));
+      return methodSymbol.Parameters[0].GetAttributes().First().AttributeClass;
+    }
+
+    private async Task<ITypeSymbol> GetAttributeTypeSymbolAsync(string code, string methodName)
+    {
+      var (root, model) = await GetRootAndModel(code);
+      var methodSymbol = model.GetDeclaredSymbol(
+        root.DescendantNodes().OfType<MethodDeclarationSyntax>().First(_ => _.Identifier.Text == methodName));
+      return methodSymbol.GetAttributes().First().AttributeClass;
+    }
+
     private async Task<ITypeSymbol> GetTypeSymbolAsync(string code, string name)
     {
       var (root, model) = await GetRootAndModel(code);
@@ -334,11 +419,11 @@ public class A : CommandBase<A> { }";
 
       var compilation = CSharpCompilation.Create(Guid.NewGuid().ToString("N"),
         syntaxTrees: new[] { tree },
-        references: new[]
+        references: AssemblyReferences.GetMetadataReferences(new[]
         {
-          MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-          MetadataReference.CreateFromFile(typeof(BusinessBase<>).Assembly.Location)
-        });
+          typeof(object).Assembly,
+          typeof(BusinessBase<>).Assembly
+        }));
 
       var model = compilation.GetSemanticModel(tree);
       var root = await tree.GetRootAsync().ConfigureAwait(false);

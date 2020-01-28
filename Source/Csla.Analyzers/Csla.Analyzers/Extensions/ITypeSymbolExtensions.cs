@@ -1,18 +1,22 @@
 ﻿using Microsoft.CodeAnalysis;
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
-using System.Reflection;
-using static System.Reflection.IntrospectionExtensions;
 
 namespace Csla.Analyzers.Extensions
 {
   internal static class ITypeSymbolExtensions
   {
+    internal static bool IsBusinessRule(this ITypeSymbol @this)
+    {
+      return @this != null &&
+        (((@this.Name == CslaMemberConstants.Types.IBusinessRule || @this.Name == CslaMemberConstants.Types.IBusinessRuleAsync) &&
+          @this.ContainingAssembly.Name == CslaMemberConstants.AssemblyName) ||
+          (@this.BaseType.IsBusinessRule() || @this.Interfaces.Any(_ => _.IsBusinessRule())));
+    }
+
     internal static bool IsObjectFactory(this ITypeSymbol @this)
     {
       return @this != null &&
-        ((@this.Name == CslaMemberConstants.Types.ObjectFactoryBase &&
+        ((@this.Name == CslaMemberConstants.Types.ObjectFactory &&
           @this.ContainingAssembly.Name == CslaMemberConstants.AssemblyName) ||
           @this.BaseType.IsObjectFactory());
     }
@@ -23,6 +27,45 @@ namespace Csla.Analyzers.Extensions
         ((@this.Name == CslaMemberConstants.Types.BusinessBase &&
           @this.ContainingAssembly.Name == CslaMemberConstants.AssemblyName) ||
           @this.BaseType.IsBusinessBase());
+    }
+
+    internal static bool IsInjectable(this ITypeSymbol @this)
+    {
+      return @this != null &&
+        ((@this.Name == CslaMemberConstants.Types.InjectAttribute &&
+          @this.ContainingAssembly.Name == CslaMemberConstants.AssemblyName) ||
+          @this.BaseType.IsInjectable());
+    }
+
+    internal static bool IsDataPortalOperationAttribute(this ITypeSymbol @this)
+    {
+      return @this != null &&
+        ((@this.Name == CslaMemberConstants.Types.DataPortalOperationAttribute &&
+          @this.ContainingAssembly.Name == CslaMemberConstants.AssemblyName) ||
+          @this.BaseType.IsDataPortalOperationAttribute());
+    }
+
+    internal static bool IsDataPortalRootOperationAttribute(this ITypeSymbol @this)
+    {
+      return @this != null &&
+        ((@this.Name == CslaMemberConstants.Types.DataPortalRootOperationAttribute &&
+          @this.ContainingAssembly.Name == CslaMemberConstants.AssemblyName) ||
+          @this.BaseType.IsDataPortalRootOperationAttribute());
+    }
+
+    internal static bool IsDataPortalChildOperationAttribute(this ITypeSymbol @this)
+    {
+      return @this != null &&
+        ((@this.Name == CslaMemberConstants.Types.DataPortalChildOperationAttribute &&
+          @this.ContainingAssembly.Name == CslaMemberConstants.AssemblyName) ||
+          @this.BaseType.IsDataPortalChildOperationAttribute());
+    }
+
+    internal static bool IsRunLocalAttribute(this ITypeSymbol @this)
+    {
+      return @this != null &&
+        @this.Name == CslaMemberConstants.Types.RunLocalAttribute &&
+          @this.ContainingAssembly.Name == CslaMemberConstants.AssemblyName;
     }
 
     internal static bool IsPrimitive(this ITypeSymbol @this)
@@ -60,21 +103,6 @@ namespace Csla.Analyzers.Extensions
           @this.Name == CslaMemberConstants.Types.BusinessBindingListBase) &&
           @this.ContainingAssembly.Name == CslaMemberConstants.AssemblyName) ||
           @this.BaseType.IsEditableStereotype());
-    }
-
-    private static ImmutableArray<PropertyInfo> GetAllProperties(this ITypeSymbol @this)
-    {
-      var properties = new List<PropertyInfo>();
-
-      var type = @this.GetType().GetTypeInfo();
-
-      while(type != null)
-      {
-        properties.AddRange(type.DeclaredProperties);
-        type = type.BaseType?.GetTypeInfo();
-      }
-
-      return properties.ToImmutableArray();
     }
 
     internal static bool IsStereotype(this ITypeSymbol @this)

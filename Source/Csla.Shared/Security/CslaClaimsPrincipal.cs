@@ -33,6 +33,28 @@ namespace Csla.Security
     /// <summary>
     /// Creates an instance of the object.
     /// </summary>
+    /// <param name="principal">Source principal from which to copy identity</param>
+    public CslaClaimsPrincipal(ClaimsPrincipal principal)
+      : base(principal.Identities)
+    { }
+
+    /// <summary>
+    /// Creates an instance of the object, initializing a role
+    /// claim for each role in the identity's Roles collection.
+    /// </summary>
+    /// <param name="identity">Identity object for the user.</param>
+    public CslaClaimsPrincipal(ICslaIdentity identity)
+      : base(identity)
+    {
+      var baseidentity = (ClaimsIdentity)base.Identity;
+      if (identity.Roles != null)
+        foreach (var item in identity.Roles)
+          baseidentity.AddClaim(new Claim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", item));
+    }
+
+    /// <summary>
+    /// Creates an instance of the object.
+    /// </summary>
     /// <param name="identity">Identity object for the user.</param>
     public CslaClaimsPrincipal(IIdentity identity)
       : base(identity)

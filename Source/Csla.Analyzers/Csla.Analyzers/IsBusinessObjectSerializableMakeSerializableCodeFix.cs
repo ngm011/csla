@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CodeActions;
 using static Csla.Analyzers.Extensions.SyntaxNodeExtensions;
+using static Csla.Analyzers.Constants;
 
 namespace Csla.Analyzers
 {
@@ -47,19 +48,21 @@ namespace Csla.Analyzers
     {
       var newRoot = AddAttribute(
         root, classNode, IsBusinessObjectSerializableMakeSerializableCodeFixConstants.SerializableName);
-      
-      if (!root.HasUsing(IsBusinessObjectSerializableMakeSerializableCodeFixConstants.SystemNamespace))
+
+      var description = IsBusinessObjectSerializableMakeSerializableCodeFixConstants.AddSerializableDescription;
+
+      if (!root.HasUsing(Namespaces.System))
       {
         newRoot = (newRoot as CompilationUnitSyntax).AddUsings(
-          SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(
-            IsBusinessObjectSerializableMakeSerializableCodeFixConstants.SystemNamespace)));
+          SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(Namespaces.System)));
+        description = IsBusinessObjectSerializableMakeSerializableCodeFixConstants.AddSerializableAndUsingDescription;
       }
 
       context.RegisterCodeFix(
         CodeAction.Create(
-          IsBusinessObjectSerializableMakeSerializableCodeFixConstants.AddSerializableAndUsingDescription,
+          description,
           _ => Task.FromResult(context.Document.WithSyntaxRoot(newRoot)),
-          IsBusinessObjectSerializableMakeSerializableCodeFixConstants.AddSerializableAndUsingDescription), diagnostic);
+          description), diagnostic);
     }
   }
 }

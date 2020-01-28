@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -30,10 +31,12 @@ namespace Csla.Analyzers.Tests
     {
       var code =
 @"using Csla;
+using System;
 
 public class A : BusinessBase<A>
 {
-  public void DataPortal_Fetch() { }
+  [Fetch]
+  public void Fetch() { }
 }";
       var document = TestHelpers.Create(code);
       var tree = await document.GetSyntaxTreeAsync();
@@ -51,9 +54,12 @@ public class A : BusinessBase<A>
 
       Assert.AreEqual(1, actions.Count, nameof(actions.Count));
 
-      await TestHelpers.VerifyActionAsync(actions,
-        IsBusinessObjectSerializableMakeSerializableCodeFixConstants.AddSerializableAndUsingDescription, document,
-        tree, new[] { "[Serializable]" });
+      await TestHelpers.VerifyChangesAsync(actions,
+        IsBusinessObjectSerializableMakeSerializableCodeFixConstants.AddSerializableDescription, document,
+        (model, newRoot) =>
+        {
+          Assert.IsTrue(newRoot.DescendantNodes(_ => true).OfType<AttributeSyntax>().Any(_ => _.Name.ToString() == "Serializable"));
+        });
     }
 
     [TestMethod]
@@ -64,7 +70,8 @@ public class A : BusinessBase<A>
 
 public class A : BusinessBase<A>
 {
-  public void DataPortal_Fetch() { }
+  [Fetch]
+  public void Fetch() { }
 }";
       var document = TestHelpers.Create(code);
       var tree = await document.GetSyntaxTreeAsync();
@@ -82,9 +89,14 @@ public class A : BusinessBase<A>
 
       Assert.AreEqual(1, actions.Count, nameof(actions.Count));
 
-      await TestHelpers.VerifyActionAsync(actions,
+      await TestHelpers.VerifyChangesAsync(actions,
         IsBusinessObjectSerializableMakeSerializableCodeFixConstants.AddSerializableAndUsingDescription, document,
-        tree, new[] { "using System;", "[Serializable]" });
+        (model, newRoot) =>
+        {
+          Assert.IsTrue(newRoot.DescendantNodes(_ => true).OfType<UsingDirectiveSyntax>().Any(
+            _ => _.Name.GetText().ToString() == "System"));
+          Assert.IsTrue(newRoot.DescendantNodes(_ => true).OfType<AttributeSyntax>().Any(_ => _.Name.ToString() == "Serializable"));
+        });
     }
   }
 }

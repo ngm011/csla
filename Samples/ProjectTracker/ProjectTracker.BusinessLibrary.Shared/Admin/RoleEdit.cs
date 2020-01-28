@@ -1,9 +1,6 @@
 using Csla;
-using Csla.Data;
 using System;
-using System.Linq;
 using System.ComponentModel.DataAnnotations;
-using Csla.Serialization;
 using System.ComponentModel;
 using Csla.Rules;
 
@@ -17,14 +14,14 @@ namespace ProjectTracker.Library.Admin
       MarkAsChild();
     }
 
-    public readonly static PropertyInfo<int> IdProperty = RegisterProperty<int>(c => c.Id);
+    public readonly static PropertyInfo<int> IdProperty = RegisterProperty<int>(nameof(Id));
     public int Id
     {
       get { return GetProperty(IdProperty); }
       private set { LoadProperty(IdProperty, value); }
     }
 
-    public readonly static PropertyInfo<string> NameProperty = RegisterProperty<string>(r => r.Name);
+    public readonly static PropertyInfo<string> NameProperty = RegisterProperty<string>(nameof(Name));
     [Required]
     public string Name
     {
@@ -32,7 +29,7 @@ namespace ProjectTracker.Library.Admin
       set { SetProperty(NameProperty, value); }
     }
 
-    public readonly static PropertyInfo<byte[]> TimeStampProperty = RegisterProperty<byte[]>(c => c.TimeStamp);
+    public readonly static PropertyInfo<byte[]> TimeStampProperty = RegisterProperty<byte[]>(nameof(TimeStamp));
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public byte[] TimeStamp
@@ -47,11 +44,11 @@ namespace ProjectTracker.Library.Admin
 
       BusinessRules.AddRule(new NoDuplicates { PrimaryProperty = IdProperty });
 
-      BusinessRules.AddRule(new Csla.Rules.CommonRules.IsInRole(Csla.Rules.AuthorizationActions.WriteProperty, IdProperty, "Administrator"));
-      BusinessRules.AddRule(new Csla.Rules.CommonRules.IsInRole(Csla.Rules.AuthorizationActions.WriteProperty, NameProperty, "Administrator"));
+      BusinessRules.AddRule(new Csla.Rules.CommonRules.IsInRole(Csla.Rules.AuthorizationActions.WriteProperty, IdProperty, Security.Roles.Administrator));
+      BusinessRules.AddRule(new Csla.Rules.CommonRules.IsInRole(Csla.Rules.AuthorizationActions.WriteProperty, NameProperty, Security.Roles.Administrator));
     }
 
-    private class NoDuplicates : Csla.Rules.BusinessRule
+    private class NoDuplicates : BusinessRule
     {
       protected override void Execute(Csla.Rules.IRuleContext context)
       {
@@ -67,6 +64,7 @@ namespace ProjectTracker.Library.Admin
       }
     }
 
+    [FetchChild]
     private void Child_Fetch(ProjectTracker.Dal.RoleDto data)
     {
       using (BypassPropertyChecks)
@@ -77,6 +75,7 @@ namespace ProjectTracker.Library.Admin
       }
     }
 
+    [InsertChild]
     private void Child_Insert()
     {
       using (var ctx = ProjectTracker.Dal.DalFactory.GetManager())
@@ -95,6 +94,7 @@ namespace ProjectTracker.Library.Admin
       }
     }
 
+    [UpdateChild]
     private void Child_Update()
     {
       using (var ctx = ProjectTracker.Dal.DalFactory.GetManager())
@@ -115,6 +115,7 @@ namespace ProjectTracker.Library.Admin
       }
     }
 
+    [DeleteSelfChild]
     private void Child_DeleteSelf()
     {
       using (var ctx = ProjectTracker.Dal.DalFactory.GetManager())
